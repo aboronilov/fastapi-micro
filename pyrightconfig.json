@@ -1,0 +1,24 @@
+{
+  "include": [
+    "src",
+    "main.py"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "pythonPath": "/home/anatoly/.cache/pypoetry/virtualenvs/fastapi-micro-PI3kuAzc-py3.13/bin/python",
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "useLibraryCodeForTypes": true,
+  "autoImportCompletions": true,
+  "extraPaths": [
+    ".",
+    "src"
+  ]
+}
+
+
+

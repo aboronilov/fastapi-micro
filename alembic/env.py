@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Import your models
 from src.database.config import Base
-from src.database.models import Task, Category  # Import all models
+from src.database.models import Task, Category, User  # Import all models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -30,6 +30,16 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def get_database_url():
+    """Get database URL from environment variables"""
+    db_host = os.getenv("DB_HOST", "localhost")
+    db_port = os.getenv("DB_PORT", "5432")
+    db_user = os.getenv("DB_USER", "postgres")
+    db_password = os.getenv("DB_PASSWORD", "password")
+    db_name = os.getenv("DB_NAME", "fastapi_micro_db")
+    
+    return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -43,7 +53,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # Use environment variables if available, otherwise fall back to config
+    url = get_database_url() or config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,6 +73,10 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Override the URL with environment variables if available
+    database_url = get_database_url()
+    config.set_main_option("sqlalchemy.url", database_url)
+    
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

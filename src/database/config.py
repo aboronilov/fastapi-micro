@@ -16,7 +16,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
 # Database URL
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Create SQLAlchemy engine
+# Create SQLAlchemy engine (sync)
 engine = create_engine(
     DATABASE_URL,
     echo=True,  # Set to False in production
@@ -24,13 +24,15 @@ engine = create_engine(
     pool_recycle=300,
 )
 
-# Create SessionLocal class
+# Async engine removed - using sync engine with asyncio.to_thread
+
+# Create SessionLocal class (sync)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create Base class
 Base = declarative_base()
 
-# Database dependency
+# Database dependency (sync)
 def get_db():
     db = SessionLocal()
     try:

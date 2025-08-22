@@ -1,3 +1,4 @@
+import asyncio
 from src.database.models import User
 from src.schemas.user import UserCreate, UserUpdate
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class UserService:
     @staticmethod
-    def get_users(db: Session, skip: int = 0, limit: int = 100, user_cache: UserCache | None = None) -> List[User]:
+    async def get_users(db: Session, skip: int = 0, limit: int = 100, user_cache: UserCache | None = None) -> List[User]:
         """Get all users with pagination and caching"""
         # Try to get from cache first
         if user_cache:
@@ -21,7 +22,7 @@ class UserService:
                 return [User(**user) for user in cached_users]
         
         # Cache miss - get from database
-        users = db.query(User).offset(skip).limit(limit).all()
+        users = await asyncio.to_thread(lambda: db.query(User).offset(skip).limit(limit).all())
         
         # Cache the results
         if user_cache:
@@ -30,7 +31,7 @@ class UserService:
         return users
 
     @staticmethod
-    def get_user(db: Session, user_id: int, user_cache: UserCache | None = None) -> User | None:
+    async def get_user(db: Session, user_id: int, user_cache: UserCache | None = None) -> User | None:
         """Get a user by ID with caching"""
         # Try to get from cache first
         if user_cache:
@@ -39,7 +40,7 @@ class UserService:
                 return User(**cached_user)
         
         # Cache miss - get from database
-        user = db.query(User).filter(User.id == user_id).first()
+        user = await asyncio.to_thread(lambda: db.query(User).filter(User.id == user_id).first())
         
         # Cache the result
         if user and user_cache:
@@ -48,7 +49,7 @@ class UserService:
         return user
     
     @staticmethod
-    def create_user(db: Session, user: UserCreate) -> User:
+    async def create_user(db: Session, user: UserCreate) -> User:
         """Create a new user with hashed password"""
         # Hash password
         if user.password is None:
@@ -62,20 +63,20 @@ class UserService:
         )
         
         try:
-            db.add(new_user)
-            db.commit()
-            db.refresh(new_user)
+            await asyncio.to_thread(lambda: db.add(new_user))
+            await asyncio.to_thread(lambda: db.commit())
+            await asyncio.to_thread(lambda: db.refresh(new_user))
             logger.info(f"New user created via service: {user.username}")
             return new_user
         except IntegrityError as e:
-            db.rollback()
+            await asyncio.to_thread(lambda: db.rollback())
             logger.error(f"Database error during user creation: {e}")
             raise ValueError("User creation failed")
     
     @staticmethod
-    def update_user(db: Session, user_id: int, user_update: UserUpdate) -> User | None:
+    async def update_user(db: Session, user_id: int, user_update: UserUpdate) -> User | None:
         """Update a user"""
-        db_user = db.query(User).filter(User.id == user_id).first()
+        db_user = await asyncio.to_thread(lambda: db.query(User).filter(User.id == user_id).first())
         if not db_user:
             return None
         
@@ -89,21 +90,21 @@ class UserService:
             setattr(db_user, field, value)
         
         try:
-            db.commit()
-            db.refresh(db_user)
+            await asyncio.to_thread(lambda: db.commit())
+            await asyncio.to_thread(lambda: db.refresh(db_user))
             logger.info(f"User updated: {db_user.username}")
             return db_user
         except IntegrityError as e:
-            db.rollback()
+            await asyncio.to_thread(lambda: db.rollback())
             logger.error(f"Database error during user update: {e}")
             raise ValueError("User update failed")
     
     @staticmethod
-    def delete_user(db: Session, user_id: int) -> bool:
+    async def delete_user(db: Session, user_id: int) -> bool:
         """Delete a user"""
-        user = db.query(User).filter(User.id == user_id).first()
+        user = await asyncio.to_thread(lambda: db.query(User).filter(User.id == user_id).first())
         if user:
-            db.delete(user)
-            db.commit()
+            await asyncio.to_thread(lambda: db.delete(user))
+            await asyncio.to_thread(lambda: db.commit())
             return True
         return False

@@ -24,7 +24,7 @@ class AuthCache:
         self.max_failed_attempts = 5
         self.lockout_duration = 900  # 15 minutes lockout
 
-    def cache_user_session(self, user_id: int, user_data: Union[UserResponse, User, Any]):
+    async def cache_user_session(self, user_id: int, user_data: Union[UserResponse, User, Any]):
         """Cache user session data"""
         try:
             # Ensure user_id is an integer
@@ -55,7 +55,7 @@ class AuthCache:
         except Exception as e:
             print(f"Error caching user session: {e}")
 
-    def get_user_session(self, user_id: int) -> Optional[dict]:
+    async def get_user_session(self, user_id: int) -> Optional[dict]:
         """Get cached user session data"""
         try:
             session_key = f"{self.user_session_prefix}{user_id}"

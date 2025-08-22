@@ -65,7 +65,7 @@ async def google_callback(
         
         # Store token in cache
         auth_cache.store_auth_token(
-            user_id=int(user.id),
+            user_id=getattr(user, 'id'),
             token=token_result["access_token"],
             expiration_time=token_result["expires_in"]
         )
@@ -129,7 +129,7 @@ async def google_callback_post(
         
         # Store token in cache
         auth_cache.store_auth_token(
-            user_id=int(user.id),
+            user_id=getattr(user, 'id'),
             token=token_result["access_token"],
             expiration_time=token_result["expires_in"]
         )

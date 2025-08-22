@@ -25,7 +25,7 @@ async def get_tasks(
         return [Task(**task) for task in cached_tasks]
     
     # Cache miss - get from database
-    tasks = task_service.get_tasks(db, skip=skip, limit=limit)
+    tasks = await task_service.get_tasks(db, skip=skip, limit=limit)
     
     # Cache the results with expiration
     task_cache.set_tasks(tasks)
@@ -40,7 +40,7 @@ async def create_task(
     task_cache: TaskCache = Depends(get_task_cache)
 ):
     """Create a new task - cache will expire automatically"""
-    new_task = task_service.create_task(db, task)
+    new_task = await task_service.create_task(db, task)
     # No need to invalidate cache - it will expire automatically
     return new_task
 
@@ -51,7 +51,7 @@ async def get_task(
     task_service: type = Depends(get_task_service)
 ):
     """Get a specific task by ID"""
-    task = task_service.get_task(db, task_id)
+    task = await task_service.get_task(db, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return task
@@ -65,7 +65,7 @@ async def update_task(
     task_cache: TaskCache = Depends(get_task_cache)
 ):
     """Update a task - cache will expire automatically"""
-    task = task_service.update_task(db, task_id, task_update)
+    task = await task_service.update_task(db, task_id, task_update)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     # No need to invalidate cache - it will expire automatically
@@ -79,7 +79,7 @@ async def delete_task(
     task_cache: TaskCache = Depends(get_task_cache)
 ):
     """Delete a task - cache will expire automatically"""
-    if not task_service.delete_task(db, task_id):
+    if not await task_service.delete_task(db, task_id):
         raise HTTPException(status_code=404, detail="Task not found")
     # No need to invalidate cache - it will expire automatically
     return None

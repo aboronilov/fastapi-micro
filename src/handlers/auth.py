@@ -16,7 +16,7 @@ async def login(
     auth_cache: AuthCache = Depends(get_auth_cache)
 ):
     """Login user with username and password"""
-    result = auth_service.login(db, user_credentials.username, user_credentials.password, auth_cache)
+    result = await auth_service.login(db, user_credentials.username, user_credentials.password, auth_cache)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -37,7 +37,7 @@ async def register(
 ):
     """Register a new user"""
     try:
-        new_user = auth_service.register(db, user)
+        new_user = await auth_service.register(db, user)
         return new_user
     except ValueError as e:
         raise HTTPException(

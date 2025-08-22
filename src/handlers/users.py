@@ -19,7 +19,7 @@ async def get_users(
     user_cache: UserCache = Depends(get_user_cache)
 ):
     """Get all users with pagination - cache-first strategy"""
-    users = user_service.get_users(db, skip=skip, limit=limit, user_cache=user_cache)
+    users = await user_service.get_users(db, skip=skip, limit=limit, user_cache=user_cache)
     return users
 
 @router.get("/me", response_model=UserSchema)
@@ -38,7 +38,7 @@ async def get_user(
     current_user: User = Depends(get_current_user)
 ):
     """Get a specific user by ID (requires authentication) - cache-first strategy"""
-    user = user_service.get_user(db, user_id, user_cache=user_cache)
+    user = await user_service.get_user(db, user_id, user_cache=user_cache)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -51,7 +51,7 @@ async def create_user(
 ):
     """Create a new user"""
     try:
-        new_user = user_service.create_user(db, user)
+        new_user = await user_service.create_user(db, user)
         return new_user
     except ValueError as e:
         raise HTTPException(
@@ -73,7 +73,7 @@ async def update_user(
 ):
     """Update a user"""
     try:
-        user = user_service.update_user(db, user_id, user_update)
+        user = await user_service.update_user(db, user_id, user_update)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         return user
@@ -90,7 +90,7 @@ async def delete_user(
     user_service: type = Depends(get_user_service)
 ):
     """Delete a user"""
-    if not user_service.delete_user(db, user_id):
+    if not await user_service.delete_user(db, user_id):
         raise HTTPException(status_code=404, detail="User not found")
     return None
 

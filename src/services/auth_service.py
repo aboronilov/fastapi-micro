@@ -1,3 +1,4 @@
+import asyncio
 from src.database.models import User
 from src.schemas.user import UserCreate
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class AuthService:
     @staticmethod
-    def login(db: Session, username: str, password: str, auth_cache: AuthCache | None = None) -> dict | None:
+    async def login(db: Session, username: str, password: str, auth_cache: AuthCache | None = None) -> dict | None:
         """Login user and return token with caching"""
         # Check if account is locked
         if auth_cache and auth_cache.is_account_locked(username):
@@ -27,10 +28,10 @@ class AuthService:
         if cached_user:
             # Use cached user data - but we need to get the actual user from DB for password verification
             # We'll use the cached data to avoid the DB query for user lookup
-            user = db.query(User).filter_by(username=username).first()
+            user = await asyncio.to_thread(lambda: db.query(User).filter_by(username=username).first())
         else:
             # Get from database
-            user = db.query(User).filter_by(username=username).first()
+            user = await asyncio.to_thread(lambda: db.query(User).filter_by(username=username).first())
             if user and auth_cache:
                 # Cache the user for future lookups
                 auth_cache.cache_user_by_username(username, user)
@@ -53,7 +54,7 @@ class AuthService:
             # Cache user session
             user_id = getattr(user, 'id', None)
             if user_id is not None:
-                auth_cache.cache_user_session(int(user_id), user)
+                await auth_cache.cache_user_session(int(user_id), user)
         
         # Create access token
         access_token = create_access_token(
@@ -71,11 +72,11 @@ class AuthService:
         }
 
     @staticmethod
-    def register(db: Session, user: UserCreate) -> User:
+    async def register(db: Session, user: UserCreate) -> User:
         """Register a new user with hashed password"""
         # Check if user already exists
-        existing_username = db.query(User).filter_by(username=user.username).first()
-        existing_email = db.query(User).filter_by(email=user.email).first()
+        existing_username = await asyncio.to_thread(lambda: db.query(User).filter_by(username=user.username).first())
+        existing_email = await asyncio.to_thread(lambda: db.query(User).filter_by(email=user.email).first())
         
         if existing_username is not None:
             raise ValueError("Username already exists")
@@ -94,9 +95,9 @@ class AuthService:
         )
         
         try:
-            db.add(new_user)
-            db.commit()
-            db.refresh(new_user)
+            await asyncio.to_thread(lambda: db.add(new_user))
+            await asyncio.to_thread(lambda: db.commit())
+            await asyncio.to_thread(lambda: db.refresh(new_user))
             logger.info(f"New user registered: {user.username}")
             return new_user
         except IntegrityError as e:

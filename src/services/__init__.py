@@ -1,1 +1,1 @@
-# Services package
+# Domain-driven microservices
